@@ -2,11 +2,10 @@ import dbConnect from "@/lib/dbConnect";
 import Application from "@/lib/models/Application";
 import { NextResponse } from "next/server";
 
-// Получить все записи
 export async function GET() {
   try {
-    await dbConnect(); // Подключаемся к базе данных
-    const applications = await Application.find(); // Получаем все записи
+    await dbConnect();
+    const applications = await Application.find();
     return NextResponse.json(applications);
   } catch (error) {
     const err = error as Error;
@@ -14,12 +13,11 @@ export async function GET() {
   }
 }
 
-// Добавить новую запись
 export async function POST(req: Request) {
   try {
-    await dbConnect(); // Подключаемся к базе данных
+    await dbConnect();
     const body = await req.json();
-    const newApplication = await Application.create(body); // Создаём новую запись
+    const newApplication = await Application.create(body);
     return NextResponse.json(newApplication);
   } catch (error) {
     const err = error as Error;
@@ -27,13 +25,12 @@ export async function POST(req: Request) {
   }
 }
 
-// Обновить запись
 export async function PUT(req: Request) {
   try {
-    await dbConnect(); // Подключаемся к базе данных
+    await dbConnect();
     const body = await req.json();
     const { id, ...updateData } = body;
-    const updatedApplication = await Application.findByIdAndUpdate(id, updateData, { new: true }); // Обновляем запись
+    const updatedApplication = await Application.findByIdAndUpdate(id, updateData, { new: true });
     if (!updatedApplication) {
       return NextResponse.json({ success: false, error: "Application not found" }, { status: 404 });
     }
@@ -44,13 +41,12 @@ export async function PUT(req: Request) {
   }
 }
 
-// Удалить запись
 export async function DELETE(req: Request) {
   try {
-    await dbConnect(); // Подключаемся к базе данных
+    await dbConnect();
     const body = await req.json();
     const { id } = body;
-    const deletedApplication = await Application.findByIdAndDelete(id); // Удаляем запись
+    const deletedApplication = await Application.findByIdAndDelete(id);
     if (!deletedApplication) {
       return NextResponse.json({ success: false, error: "Application not found" }, { status: 404 });
     }
