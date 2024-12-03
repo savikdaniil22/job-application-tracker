@@ -1,49 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AddApplicationModal from "../AddApplicationModal/AddApplicationModal";
 import styles from "./ApplicationsTable.module.css";
-
-interface Application {
-  id: number;
-  company: string;
-  position: string;
-  salaryRange: string;
-  status: string;
-  notes: string;
-}
-
-const initialApplications: Application[] = [
-  {
-    id: 1,
-    company: "TechCorp",
-    position: "Frontend Developer",
-    salaryRange: "$60,000 - $80,000",
-    status: "Interviewing",
-    notes: "First-round completed",
-  },
-  {
-    id: 2,
-    company: "Innovatech",
-    position: "Backend Developer",
-    salaryRange: "$70,000 - $90,000",
-    status: "Applied",
-    notes: "Waiting for response",
-  },
-  {
-    id: 3,
-    company: "SoftSolutions",
-    position: "Full Stack Developer",
-    salaryRange: "$75,000 - $100,000",
-    status: "Offer Received",
-    notes: "Offer under review",
-  },
-];
+import { Application } from "@/lib/types/interfaces";
+import { fetchApplications, saveApplication, deleteApplication } from "@/app/api/applications/applicationService";
 
 export default function ApplicationsTable() {
-  const [applications, setApplications] = useState<Application[]>(initialApplications);
+  const [applications, setApplications] = useState<Application[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const data = await fetchApplications();
+        setApplications(data || []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleOpenModal = () => {
     setSelectedApplication(null);
@@ -55,25 +38,46 @@ export default function ApplicationsTable() {
     setSelectedApplication(null);
   };
 
-  const handleAddApplication = (data: Application) => {
-    if (selectedApplication) {
-      setApplications((prev) => prev.map((app) => (app.id === selectedApplication.id ? { ...app, ...data } : app)));
-    } else {
-      setApplications((prev) => [...prev, { ...data, id: Date.now() }]);
+  const handleAddApplication = async (data: Omit<Application, "_id">) => {
+    setIsLoading(true);
+    try {
+      const newData = selectedApplication
+        ? await saveApplication({ ...data, _id: selectedApplication._id }, true)
+        : await saveApplication(data);
+
+      setApplications((prev) =>
+        selectedApplication
+          ? prev.map((app) => (app._id === selectedApplication._id ? newData : app))
+          : [...prev, newData]
+      );
+    } catch (err) {
+      console.error("Failed to save application:", err);
+      alert(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setIsLoading(false);
+      handleCloseModal();
     }
-    handleCloseModal();
   };
 
-  const handleDeleteApplication = () => {
-    if (selectedApplication) {
-      setApplications((prev) => prev.filter((app) => app.id !== selectedApplication.id));
+  const handleDeleteApplication = async () => {
+    if (!selectedApplication) return;
+
+    setIsLoading(true);
+    try {
+      await deleteApplication(selectedApplication._id);
+      setApplications((prev) => prev.filter((app) => app._id !== selectedApplication._id));
+    } catch (err) {
+      console.error("Error during deletion:", err);
+      alert(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setIsLoading(false);
+      handleCloseModal();
     }
-    handleCloseModal();
   };
 
   const rows = applications.map((application) => (
     <tr
-      key={application.id}
+      key={application._id}
       onClick={() => {
         setSelectedApplication(application);
         setIsModalOpen(true);
@@ -100,8 +104,18 @@ export default function ApplicationsTable() {
               <th>Notes</th>
             </tr>
           </thead>
-          <tbody>{rows}</tbody>
-        </table>{" "}
+          <tbody>
+            {isLoading ? (
+              <tr>
+                <td colSpan={5} className={styles.loaderRow}>
+                  Loading...
+                </td>
+              </tr>
+            ) : (
+              rows
+            )}
+          </tbody>
+        </table>
         <button className={styles.addButton} onClick={handleOpenModal}>
           +
         </button>

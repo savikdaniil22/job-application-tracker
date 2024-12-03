@@ -29,8 +29,10 @@ export async function PUT(req: Request) {
   try {
     await dbConnect();
     const body = await req.json();
-    const { id, ...updateData } = body;
-    const updatedApplication = await Application.findByIdAndUpdate(id, updateData, { new: true });
+    const { _id, ...updateData } = body;
+    const updatedApplication = await Application.findByIdAndUpdate(_id, updateData, {
+      new: true,
+    });
     if (!updatedApplication) {
       return NextResponse.json({ success: false, error: "Application not found" }, { status: 404 });
     }
@@ -44,8 +46,7 @@ export async function PUT(req: Request) {
 export async function DELETE(req: Request) {
   try {
     await dbConnect();
-    const body = await req.json();
-    const { id } = body;
+    const { id } = await req.json();
     const deletedApplication = await Application.findByIdAndDelete(id);
     if (!deletedApplication) {
       return NextResponse.json({ success: false, error: "Application not found" }, { status: 404 });

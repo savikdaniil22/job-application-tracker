@@ -1,49 +1,33 @@
 import React, { useEffect, useState } from "react";
 import styles from "./AddApplicationModal.module.css";
-
-interface Application {
-  id: number;
-  company: string;
-  position: string;
-  salaryRange: string;
-  status: string;
-  notes: string;
-}
-
-interface ModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (data: Application) => void;
-  onDelete?: () => void;
-  application?: Application | null;
-}
+import { Application } from "@/lib/types/interfaces";
+import { ModalProps } from "@/lib/types/interfaces";
 
 export default function AddApplicationModal({ isOpen, onClose, onSubmit, onDelete, application }: ModalProps) {
-  const [formData, setFormData] = useState<Application>({
-    id: Date.now(),
+  const [formData, setFormData] = useState<Omit<Application, "_id">>({
     company: "",
     position: "",
     salaryRange: "",
-    status: "",
+    status: "Applied",
     notes: "",
   });
 
   useEffect(() => {
     if (application) {
-      setFormData(application);
+      const { _id, ...rest } = application;
+      setFormData(rest);
     } else {
       setFormData({
-        id: Date.now(),
         company: "",
         position: "",
         salaryRange: "",
-        status: "",
+        status: "Applied",
         notes: "",
       });
     }
   }, [application]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -65,9 +49,10 @@ export default function AddApplicationModal({ isOpen, onClose, onSubmit, onDelet
             <input
               type="text"
               name="company"
-              value={formData.company}
+              value={formData.company || ""}
               onChange={handleInputChange}
               className={styles.inputField}
+              required
             />
           </div>
           <div className={styles.formGroup}>
@@ -75,9 +60,10 @@ export default function AddApplicationModal({ isOpen, onClose, onSubmit, onDelet
             <input
               type="text"
               name="position"
-              value={formData.position}
+              value={formData.position || ""}
               onChange={handleInputChange}
               className={styles.inputField}
+              required
             />
           </div>
           <div className={styles.formGroup}>
@@ -85,27 +71,31 @@ export default function AddApplicationModal({ isOpen, onClose, onSubmit, onDelet
             <input
               type="text"
               name="salaryRange"
-              value={formData.salaryRange}
+              value={formData.salaryRange || ""}
               onChange={handleInputChange}
               className={styles.inputField}
             />
           </div>
           <div className={styles.formGroup}>
             <label>Status:</label>
-            <input
-              type="text"
+            <select
               name="status"
               value={formData.status}
               onChange={handleInputChange}
               className={styles.inputField}
-            />
+              required>
+              <option value="Applied">Applied</option>
+              <option value="Interviewing">Interviewing</option>
+              <option value="Rejected">Rejected</option>
+              <option value="Offer">Offer</option>
+            </select>
           </div>
           <div className={styles.formGroup}>
             <label>Notes:</label>
             <input
               type="text"
               name="notes"
-              value={formData.notes}
+              value={formData.notes || ""}
               onChange={handleInputChange}
               className={styles.inputField}
             />
